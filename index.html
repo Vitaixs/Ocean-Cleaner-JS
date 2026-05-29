@@ -808,18 +808,36 @@ function drawBars(){
 }
 
 function drawBoostBar(){
-    let width = 300; let x = 100; let y = canvas.height - 40;
+    let width = 300; // Largura da barra de boost
+    let height = 18; // Altura da barra de boost
+    
+    // Define a distância que a barra vai ficar da borda direita e da borda inferior
+    let marginRight = 40;
+    let marginBottom = 40;
+
+    // Calcula a posição dinâmica no canto inferior direito
+    let x = canvas.width - width - marginRight;
+    let y = canvas.height - height - marginBottom;
+
+    // 1. Desenha o fundo escuro da barra
     ctx.fillStyle = "#112233";
-    ctx.fillRect(x,y,width,18);
+    ctx.fillRect(x, y, width, height);
 
+    // 2. Calcula e desenha o preenchimento amarelo do boost
     let percent = !player.hasBoost ? 0 : (player.boostCooldown <= 0 ? 1 : 1 - (player.boostCooldown / player.boostCooldownMax));
-
     ctx.fillStyle = "#ffee00";
-    ctx.fillRect(x, y, width*percent, 18);
+    ctx.fillRect(x, y, width * percent, height);
 
+    // 3. Desenha o texto de mensagens (ex: avisos do jogo) logo acima da barra
     ctx.fillStyle = "white";
     ctx.font = "16px Arial";
-    ctx.fillText(message, x, y-10);
+    // Alinha o texto à direita para acompanhar o novo visual da barra
+    ctx.textAlign = "right"; 
+    ctx.fillText(message, canvas.width - marginRight, y - 10);
+    
+    // IMPORTANTE: Reseta o alinhamento do texto para o padrão (left) 
+    // para não quebrar os outros textos do jogo!
+    ctx.textAlign = "left"; 
 }
 
 function draw(){
