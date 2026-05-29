@@ -3,110 +3,285 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mergulhador Oceânico</title>
+<title>Ocean Cleaner: A Ocean Rogue-like</title>
 
 <style>
-    body{
-        margin:0;
-        overflow:hidden;
-        background:#001521;
-        font-family:Arial;
+    body {
+        margin: 0;
+        overflow: hidden;
+        background: #000c14;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        user-select: none;
     }
 
-    canvas{
-        display:block;
+    canvas {
+        display: block;
     }
 
-    #menu,
-    #shop{
-        position:absolute;
-        inset:0;
-        display:flex;
-        flex-direction:column;
-        justify-content:center;
-        align-items:center;
-        background:rgba(0,0,0,0.92);
-        color:white;
-        z-index:20;
+    /* Estilo Base para as Telas/Menus Overlay */
+    .overlay-screen {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background: rgb(1, 24, 46);
+        color: white;
+        z-index: 20;
+        text-align: center;
+        padding: 20px;
     }
 
-    #shop{
-        display:none;
+    h1 {
+        font-size: 48px;
+        letter-spacing: 3px;
+        color: #00e5ff;
+        text-shadow: 0 0 15px rgba(0, 229, 255, 0.6);
+        margin-bottom: 10px;
     }
 
-    button{
-        padding:12px 24px;
-        margin:6px;
-        font-size:20px;
-        border:none;
-        border-radius:10px;
-        cursor:pointer;
-        background:#00aaff;
-        color:white;
+    h2 {
+        font-size: 28px;
+        color: #00ffaa;
+        margin-bottom: 20px;
     }
 
-    button:hover{
-        background:#2ec0ff;
+    p {
+        font-size: 18px;
+        color: #a0c0d0;
+        max-width: 600px;
+        line-height: 1.6;
     }
 
-    #shopMoney{
-        position:absolute;
-        top:20px;
-        right:20px;
-        font-size:32px;
-        color:gold;
-        font-weight:bold;
+    /* Botões Modernizados */
+    button {
+        padding: 14px 28px;
+        margin: 8px;
+        font-size: 18px;
+        font-weight: bold;
+        border: 2px solid #00aaff;
+        border-radius: 8px;
+        cursor: pointer;
+        background: rgba(0, 170, 255, 0.1);
+        color: #e6f7ff;
+        transition: all 0.25s ease;
+        box-shadow: 0 0 10px rgba(0, 170, 255, 0.2);
+    }
+
+    button:hover {
+        background: #00aaff;
+        color: #000c14;
+        box-shadow: 0 0 20px rgba(0, 170, 255, 0.6);
+        transform: translateY(-2px);
+    }
+
+    button:disabled {
+        background: rgba(40, 50, 60, 0.4);
+        border-color: #445566;
+        color: #778899;
+        cursor: not-allowed;
+        box-shadow: none;
+        transform: none;
+    }
+
+    /* Botão Rápido da Loja (HUD) */
+    #quickShopBtn {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        z-index: 10;
+        background: rgba(255, 215, 0, 0.1);
+        border-color: gold;
+        color: gold;
+        padding: 10px 20px;
+        font-size: 16px;
+        display: none;
+    }
+    #quickShopBtn:hover {
+        background: gold;
+        color: black;
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+    }
+
+    /* Lista de Comandos */
+    .controls-box {
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid #005577;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+        text-align: left;
+        min-width: 320px;
+    }
+    .controls-box div {
+        margin: 8px 0;
+        font-size: 16px;
+    }
+    .key {
+        background: #334455;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-family: monospace;
+        color: #00ffaa;
+        font-weight: bold;
+    }
+
+    /* Grid da Loja */
+    .shop-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        max-width: 800px;
+        width: 100%;
+        margin: 20px 0;
+    }
+    @media (max-width: 600px) {
+        .shop-grid { grid-template-columns: 1fr; }
+    }
+
+    .shop-item {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid #1a3a5c;
+        border-radius: 8px;
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .item-info {
+        font-size: 14px;
+        color: #8ab4f8;
+        margin-bottom: 5px;
+    }
+
+    #shopMoney {
+        font-size: 28px;
+        color: gold;
+        font-weight: bold;
+        text-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+        margin-bottom: 15px;
+    }
+
+    .death-reason {
+        font-size: 22px;
+        color: #ff4a4a;
+        font-weight: bold;
+        margin: 20px 0;
+        text-shadow: 0 0 10px rgba(255, 74, 74, 0.3);
     }
 </style>
 </head>
 <body>
 
-<div id="menu">
-    <h1>MERGULHADOR OCEÂNICO</h1>
-    <p>Limpe o oceano e sobreviva.</p>
+<button id="quickShopBtn" onclick="triggerQuickShop()">Ir para Loja</button>
 
-    <button onclick="startGame()">
-        JOGAR
-    </button>
-</div>
+<div id="menu" class="overlay-screen">
+    <h1>OCEAN CLEANER</h1>
+    <h2>A Ocean Rogue-like</h2>
+    <p>Limpe os oceanos da poluição, desvie das ameaças e gerencie seu oxigênio.</p>
 
-<div id="shop">
-
-    <div id="shopMoney">
-        $<span id="shopMoneyValue">0</span>
+    <div class="controls-box">
+        <h3>Comandos do Jogo:</h3>
+        <div><span class="key">W</span> <span class="key">A</span> <span class="key">S</span> <span class="key">D</span> - Movimentar o Mergulhador</div>
+        <div><span class="key">Espaço</span> - Ativar Propulsão (Pé de Pato)</div>
+        <div><span class="key">Clique do Mouse</span> - Disparar Arpão (Mira segue o cursor)</div>
     </div>
 
-    <h1>LOJA</h1>
+    <button onclick="startGame()">INICIAR</button>
+</div>
 
-    <button onclick="buyBoost()">
-        Melhorar Pé de Pato ($90)
-    </button>
+<div id="gameOverScreen" class="overlay-screen" style="display: none;">
+    <h1>SE FODEU</h1>
+    <div id="deathReasonText" class="death-reason">Você ficou sem oxigênio!</div>
+    <p>O que deseja fazer agora?</p>
+    <div style="margin-top: 20px;">
+        <button onclick="openShopFromGameOver()">Ir para a Loja</button>
+        <button onclick="continueGame()" style="border-color: #00ffaa; color: #00ffaa;">Voltar ao Mar</button>
+    </div>
+</div>
 
-    <button onclick="buyOxygen()">
-        Tanque Maior ($120)
-    </button>
+<div id="shop" class="overlay-screen" style="display: none;">
+    <h1>LOJA DE UPGRADES</h1>
+    <div id="shopMoney">Saldo: $<span id="shopMoneyValue">0</span></div>
 
-    <button onclick="buyInventory()">
-        Inventário Maior ($100)
-    </button>
+    <div class="shop-grid">
+        <div class="shop-item">
+            <div>
+                <strong>Pé de Pato</strong>
+                <div class="item-info" id="info-boost">Nível: 0/10</div>
+            </div>
+            <button id="btn-boost" onclick="buyBoost()">Melhorar ($90)</button>
+        </div>
 
-    <button onclick="buyLife()">
-        Vida Máxima +1 ($140)
-    </button>
+        <div class="shop-item">
+            <div>
+                <strong>Tanque de Oxigênio</strong>
+                <div class="item-info" id="info-oxygen">Nível: 0/10</div>
+            </div>
+            <button id="btn-oxygen" onclick="buyOxygen()">Melhorar ($120)</button>
+        </div>
 
-    <button onclick="buyHarpoon()">
-        Melhorar Arpão ($150)
-    </button>
+        <div class="shop-item">
+            <div>
+                <strong>Mochila de Inventário</strong>
+                <div class="item-info" id="info-inventory">Nível: 0/10</div>
+            </div>
+            <button id="btn-inventory" onclick="buyInventory()">Melhorar ($100)</button>
+        </div>
 
-    <button onclick="continueGame()">
-        CONTINUAR
-    </button>
+        <div class="shop-item">
+            <div>
+                <strong>Resistência (Vida Máxima)</strong>
+                <div class="item-info" id="info-life">Nível: 0/10</div>
+            </div>
+            <button id="btn-life" onclick="buyLife()">Melhorar ($140)</button>
+        </div>
 
+        <div class="shop-item">
+            <div>
+                <strong>Arpão de Captura</strong>
+                <div class="item-info" id="info-harpoon">Nível: 0/10</div>
+            </div>
+            <button id="btn-harpoon" onclick="buyHarpoon()">Melhorar ($150)</button>
+        </div>
+
+        <div class="shop-item">
+    <div>
+        <strong>Arpão Perfurante</strong>
+        <div class="item-info" id="info-piercing-harpoon">Nível: 0/5</div>
+    </div>
+    <button id="btn-piercing-harpoon" onclick="buyPiercingHarpoon()">Melhorar ($180)</button>
+</div>
+
+        <div class="shop-item" style="grid-column: span 1;">
+            <div>
+                <strong>Barco</strong>
+                <div class="item-info" id="info-boat">Nível: 1/2</div>
+            </div>
+            <button id="btn-boat" onclick="buyBoatUpgrade()">Novo Bioma ($1000)</button>
+        </div>
+    </div>
+
+    <button onclick="continueGame()" style="margin-top: 15px; border-color: #00ffaa; color: #00ffaa; width: 200px;">VOLTAR AO MAR</button>
 </div>
 
 <canvas id="game"></canvas>
 
 <script>
+const diverImg = new Image(); diverImg.src = "img/diver.png";
+const sharkImg = new Image(); sharkImg.src = "img/tubarao.png";
+const skyImg = new Image(); skyImg.src = "img/background.jpg";
+const boatImg = new Image(); boatImg.src = "img/barco.png";
+
+const fishImages = [];
+for (let i = 1; i <= 8; i++) {
+    const img = new Image();
+    img.src = `img/peixe${i}.png`;
+    fishImages.push(img);
+}
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
@@ -114,1145 +289,902 @@ const ctx = canvas.getContext("2d");
 canvas.width = innerWidth;
 canvas.height = innerHeight;
 
+window.addEventListener('resize', () => {
+    canvas.width = innerWidth;
+    canvas.height = innerHeight;
+});
+
 const menu = document.getElementById("menu");
 const shop = document.getElementById("shop");
+const gameOverScreen = document.getElementById("gameOverScreen");
+const deathReasonText = document.getElementById("deathReasonText");
 const shopMoneyValue = document.getElementById("shopMoneyValue");
+const quickShopBtn = document.getElementById("quickShopBtn");
 
 let gameStarted = false;
-
-let cameraX = 0;
-let cameraY = 0;
+let cameraX = 0; cameraY = 0;
 
 const WORLD_LIMIT_X = 9000;
 const WORLD_LIMIT_Y = 10000;
 
-const boat = {
-    x:-120,
-    y:-25,
-    w:240,
-    h:70
-};
-
+const boat = { x:-120, y:-25, w:240, h:70 };
 const keys = {};
-const mouse = {x:0,y:0};
+const mouse = {x:0, y:0};
+
+let iceBlocks = [];
 
 document.addEventListener("keydown", e=>{
-
     keys[e.key.toLowerCase()] = true;
-
-    if(e.code === "Space"){
-        activateBoost();
-    }
+    if(e.code === "Space"){ activateBoost(); }
 });
 
-document.addEventListener("keyup", e=>{
-    keys[e.key.toLowerCase()] = false;
-});
-
-canvas.addEventListener("mousemove", e=>{
-
-    mouse.x = e.clientX;
-    mouse.y = e.clientY;
-});
-
+document.addEventListener("keyup", e=>{ keys[e.key.toLowerCase()] = false; });
+canvas.addEventListener("mousemove", e=>{ mouse.x = e.clientX; mouse.y = e.clientY; });
 canvas.addEventListener("click", shootHarpoon);
 
-function rand(min,max){
-    return Math.random()*(max-min)+min;
-}
-
-function clamp(v,min,max){
-    return Math.max(min,Math.min(max,v));
-}
+function rand(min,max){ return Math.random()*(max-min)+min; }
+function clamp(v,min,max){ return Math.max(min,Math.min(max,v)); }
 
 const player = {
+    x: 0, y: -220,
+    speed: 3.5, 
+    oxygenMax: 50, oxygen: 50,
+    hp: 3, maxHp: 3,
+    score: 0, money: 0,
+    inventory: 0, inventoryMax: 100,
+    invulnerable: false, blink: false,
+    canMove: false, jumping: true, vy: 0,
 
-    x:0,
-    y:-220,
+    levels: {
+        boost: 0,
+        oxygen: 0,
+        inventory: 0,
+        life: 0,
+        harpoon: 0,          // Agora aumenta a quantidade de lixo
+        piercingHarpoon: 0,  // NOVO: Arpão Perfurante que causa dano a tubarões
+        boat: 1
+    },
 
-    speed:3,
+    hasBoost: false, boosting: false, boostPower: 2,
+    boostDuration: 0, boostMaxDuration: 150,
+    boostCooldown: 0, boostCooldownMax: 1200,
 
-    oxygenMax:100,
-    oxygen:100,
-
-    hp:3,
-    maxHp:3,
-
-    score:0,
-    money:0,
-
-    inventory:0,
-    inventoryMax:100,
-
-    invulnerable:false,
-    blink:false,
-
-    canMove:false,
-
-    jumping:true,
-    vy:0,
-
-    // pé de pato
-    hasBoost:false,
-    boostLevel:0,
-    boosting:false,
-
-    boostPower:3,
-
-    boostDuration:0,
-    boostMaxDuration:120,
-
-    // 20 segundos
-    boostCooldown:0,
-    boostCooldownMax:1200,
-
-    // arpão
-    harpoonLevel:0
+    facingLeft: false
 };
 
 const harpoon = {
-
-    active:false,
-    returning:false,
-
-    x:0,
-    y:0,
-
-    vx:0,
-    vy:0,
-
-    speed:15,
-
-    target:null,
-    targetType:null
+    active: false, returning: false,
+    x: 0, y: 0, vx: 0, vy: 0,
+    speed: 18, target: null, targetType: null
 };
 
-let fishes = [];
-let sharks = [];
-let trashes = [];
-let jellys = [];
+let fishes = []; let sharks = []; let trashes = []; let jellys = [];
+let message = ""; let messageTimer = 0;
 
-let message = "";
-let messageTimer = 0;
+function showMessage(text){ message = text; messageTimer = 180; }
 
-function showMessage(text){
-
-    message = text;
-    messageTimer = 180;
+function isNearScreen(x, y, padding = 300) {
+    return (x > cameraX - padding && x < cameraX + canvas.width + padding &&
+            y > cameraY - padding && y < cameraY + canvas.height + padding);
 }
 
 function spawnWorld(){
+    fishes = []; sharks = []; trashes = []; jellys = []; iceBlocks = [];
 
-    fishes = [];
-    sharks = [];
-    trashes = [];
-    jellys = [];
+    if(player.levels.boat === 2) {
+        for(let i = 0; i < 60; i++) {
+            iceBlocks.push({
+                x: rand(-WORLD_LIMIT_X + 500, WORLD_LIMIT_X - 500),
+                y: rand(400, WORLD_LIMIT_Y - 500),
+                w: rand(140, 280),
+                h: rand(90, 170)
+            });
+        }
+    }
 
-    // peixes
-    for(let i=0;i<120;i++){
-
+    for(let i=0; i<120; i++){
+        let randomImgIndex = Math.floor(Math.random() * fishImages.length);
         fishes.push({
-
-            x:rand(-WORLD_LIMIT_X,WORLD_LIMIT_X),
-            y:rand(200,WORLD_LIMIT_Y),
-
-            r:14,
-
-            dir:Math.random()<0.5?-1:1,
-            speed:rand(0.5,2),
-
-            timer:0,
-            moveTime:rand(80,220)
+            x: rand(-WORLD_LIMIT_X, WORLD_LIMIT_X), y: rand(200, WORLD_LIMIT_Y), r: 14,
+            img: fishImages[randomImgIndex], 
+            dir: Math.random()<0.5?-1:1, speed: rand(0.8,2.2),
+            timer: 0, moveTime: rand(80,220)
         });
     }
 
-    // lixo
-    for(let i=0;i<220;i++){
-
-        let depth = rand(200,WORLD_LIMIT_Y);
-
+    // A quantidade de lixo aumenta com base no nível do upgrade "Arpão" (Aumenta +30 lixos por nível)
+    let totalTrash = 220 + (player.levels.harpoon * 30);
+    for(let i=0; i<totalTrash; i++){
+        let depth = rand(200, WORLD_LIMIT_Y);
         trashes.push({
-
-            x:rand(-WORLD_LIMIT_X,WORLD_LIMIT_X),
-            y:depth,
-
-            r:14,
-
-            points:Math.floor(depth/250)+10
+            x: rand(-WORLD_LIMIT_X, WORLD_LIMIT_X), y: depth, r: 14,
+            points: Math.floor(depth/250)+10
         });
     }
 
-    // tubarões
-    for(let i=0;i<60;i++){
-
-        let depth = rand(400,WORLD_LIMIT_Y);
-
+    for(let i=0; i<60; i++){
+        let depth = rand(400, WORLD_LIMIT_Y);
         sharks.push({
-
-            x:rand(-WORLD_LIMIT_X,WORLD_LIMIT_X),
-            y:depth,
-
-            w:90,
-            h:40,
-
-            hp:10,
-
-            speed:4 + depth/2500,
-
-            currentSpeed:4 + depth/2500,
-
-            dir:Math.random()<0.5?-1:1,
-            swimSpeed:rand(1,2),
-
-            timer:0,
-            moveTime:rand(80,240),
-
-            activeDistance:320,
-
-            tiredTimer:0
+            x: rand(-WORLD_LIMIT_X, WORLD_LIMIT_X), y: depth,
+            w: 90, h: 40, 
+            hp: 10,                 // Vida base interna do tubarão
+            invulnerable: false,    // Controle de frame de invulnerabilidade do tubarão
+            blink: false,           // Controle visual para piscar
+            blinkTimer: 0,          // Timer de 1 segundo (60 frames)
+            speed: 5 + depth/2500, currentSpeed: 4 + depth/2500,
+            dir: Math.random()<0.5?-1:1, facingRight: false,
+            swimSpeed: rand(1,2), timer: 0, moveTime: rand(80,240),
+            activeDistance: 350, tiredTimer: 0
         });
     }
 
-    // águas vivas
-    for(let i=0;i<45;i++){
-
-        jellys.push({
-
-            x:rand(-WORLD_LIMIT_X,WORLD_LIMIT_X),
-            y:rand(300,WORLD_LIMIT_Y),
-
-            w:30,
-            h:50,
-
-            dirX:Math.random()<0.5?-1:1,
-            dirY:Math.random()<0.5?-1:1,
-
-            speedX:rand(0.4,1.2),
-            speedY:rand(0.4,1.2),
-
-            timer:0,
-            moveTime:rand(60,200)
-        });
-    }
+    for(let i=0; i<45; i++){
+    jellys.push({ // <--- Agora sim, correto!
+        x: rand(-WORLD_LIMIT_X, WORLD_LIMIT_X), y: rand(300, WORLD_LIMIT_Y),
+        w: 30, h: 50,
+        dirX: Math.random()<0.5?-1:1, dirY: Math.random()<0.5?-1:1,
+        speedX: rand(0.5,1.4), speedY: rand(0.5,1.4),
+        timer: 0, moveTime: rand(60,200)
+    });
+}
 }
 
 spawnWorld();
 
 function startGame(){
-
     menu.style.display = "none";
-
+    quickShopBtn.style.display = "block";
     gameStarted = true;
-
     player.jumping = true;
     player.canMove = false;
 }
 
+function triggerQuickShop() {
+    player.canMove = false;
+    player.money += Math.max(0, Math.floor(player.score));
+    player.score = 0;
+    updateUI();
+    shop.style.display = "flex";
+}
+
+function openShopFromGameOver() {
+    gameOverScreen.style.display = "none";
+    shop.style.display = "flex";
+}
+
 function activateBoost(){
-
-    if(!player.canMove) return;
-
-    if(!player.hasBoost) return;
-
-    if(player.boostCooldown > 0) return;
-
+    if(!player.canMove || !player.hasBoost || player.boostCooldown > 0) return;
     player.boosting = true;
-
     player.boostDuration = player.boostMaxDuration;
-
     player.boostCooldown = player.boostCooldownMax;
 }
 
 function shootHarpoon(){
-
-    if(!player.canMove) return;
-
-    if(harpoon.active) return;
-
+    if(!player.canMove || harpoon.active) return;
     harpoon.active = true;
     harpoon.returning = false;
-
     harpoon.x = player.x;
     harpoon.y = player.y;
 
     let mx = mouse.x + cameraX;
     let my = mouse.y + cameraY;
+    let angle = Math.atan2(my - player.y, mx - player.x);
 
-    let angle = Math.atan2(
-        my-player.y,
-        mx-player.x
-    );
+    harpoon.vx = Math.cos(angle) * harpoon.speed;
+    harpoon.vy = Math.sin(angle) * harpoon.speed;
+}
 
-    harpoon.vx = Math.cos(angle)*harpoon.speed;
-    harpoon.vy = Math.sin(angle)*harpoon.speed;
+function checkIceCollision(px, py, radius) {
+    if(player.levels.boat < 2) return false;
+    for(let block of iceBlocks) {
+        if (px + radius > block.x && px - radius < block.x + block.w &&
+            py + radius > block.y && py - radius < block.y + block.h) {
+            return true;
+        }
+    }
+    return false;
 }
 
 function updatePlayer(){
-
     if(!gameStarted) return;
 
-    // pulo inicial
     if(player.jumping){
-
         player.vy += 0.25;
-
         player.y += player.vy;
-
         if(player.y >= 80){
-
             player.jumping = false;
             player.canMove = true;
         }
-
         cameraX = player.x - canvas.width/2;
         cameraY = player.y - canvas.height/2;
-
         return;
     }
 
     if(!player.canMove) return;
 
     let moveSpeed = player.speed;
-
     if(player.boosting){
-
         moveSpeed += player.boostPower;
-
         player.boostDuration--;
-
-        if(player.boostDuration <= 0){
-            player.boosting = false;
-        }
+        if(player.boostDuration <= 0) player.boosting = false;
     }
+
+    let oldX = player.x;
+    let oldY = player.y;
 
     if(keys["w"]) player.y -= moveSpeed;
     if(keys["s"]) player.y += moveSpeed;
-    if(keys["a"]) player.x -= moveSpeed;
-    if(keys["d"]) player.x += moveSpeed;
+    if(checkIceCollision(player.x, player.y, 16)) player.y = oldY;
 
-    // impedir sair da água
-    if(player.y < 15){
-        player.y = 15;
-    }
+    if(keys["a"]) { player.x -= moveSpeed; player.facingLeft = true; }
+    if(keys["d"]) { player.x += moveSpeed; player.facingLeft = false; }
+    if(checkIceCollision(player.x, player.y, 16)) player.x = oldX;
 
-    // oxigênio
-    if(player.y > 0){
+    player.x = clamp(player.x, -WORLD_LIMIT_X, WORLD_LIMIT_X);
+    player.y = clamp(player.y, 15, WORLD_LIMIT_Y);
+
+    if(player.y > 0) {
         player.oxygen -= 0.02;
     }
 
-    // descarregar inventário
-    let touchingBoat =
-        player.x > boat.x &&
-        player.x < boat.x + boat.w &&
-        player.y > boat.y &&
-        player.y < boat.y + boat.h;
-
-    if(touchingBoat){
-
-        if(player.inventory > 0){
-
-            player.inventory -= 0.5;
-
-            if(player.inventory < 0){
-                player.inventory = 0;
-            }
-        }
+    let touchingBoat = player.x > boat.x && player.x < boat.x + boat.w &&
+                       player.y > boat.y && player.y < boat.y + boat.h;
+    if(touchingBoat && player.inventory > 0){
+        player.inventory -= 0.6; 
+        if(player.inventory < 0) player.inventory = 0;
     }
 
-    if(player.boostCooldown > 0){
-        player.boostCooldown--;
-    }
+    if(player.boostCooldown > 0) player.boostCooldown--;
 
     cameraX = player.x - canvas.width/2;
     cameraY = player.y - canvas.height/2;
 }
 
 function damagePlayer(text){
-
     if(player.invulnerable) return;
-
     player.hp--;
-
     showMessage(text);
-
     player.invulnerable = true;
 
-    let blinkInterval = setInterval(()=>{
-        player.blink = !player.blink;
-    },100);
+    let blinkInterval = setInterval(()=>{ player.blink = !player.blink; },100);
 
     setTimeout(()=>{
-
         clearInterval(blinkInterval);
-
         player.blink = false;
         player.invulnerable = false;
-
-    },2000);
+    },1800);
 }
 
 function updateCreatures(){
-
-    // peixes
     for(let fish of fishes){
-
+        let oldX = fish.x;
         fish.x += fish.dir * fish.speed;
+        
+        if (player.levels.boat === 2 && isNearScreen(fish.x, fish.y)) {
+            if(checkIceCollision(fish.x, fish.y, fish.r)) {
+                fish.dir *= -1; fish.x = oldX;
+            }
+        }
 
         fish.timer++;
-
         if(fish.timer > fish.moveTime){
-
-            fish.timer = 0;
-
-            fish.dir *= -1;
-
+            fish.timer = 0; fish.dir *= -1;
             fish.moveTime = rand(80,220);
         }
     }
 
-    // águas vivas
     for(let jelly of jellys){
-
+        let oldX = jelly.x; let oldY = jelly.y;
         jelly.x += jelly.dirX * jelly.speedX;
         jelly.y += jelly.dirY * jelly.speedY;
 
+        if(player.levels.boat === 2 && isNearScreen(jelly.x, jelly.y)) {
+            if(checkIceCollision(jelly.x, jelly.y, 15)) {
+                jelly.dirX *= -1; jelly.dirY *= -1;
+                jelly.x = oldX; jelly.y = oldY;
+            }
+        }
+
         jelly.timer++;
-
         if(jelly.timer > jelly.moveTime){
-
-            jelly.timer = 0;
-
-            jelly.dirX *= -1;
-            jelly.dirY *= -1;
-
+            jelly.timer = 0; jelly.dirX *= -1; jelly.dirY *= -1;
             jelly.moveTime = rand(60,200);
         }
 
-        if(
-            Math.hypot(
-                player.x-jelly.x,
-                player.y-jelly.y
-            ) < 35
-        ){
-            damagePlayer("uma água viva te queimou");
+        if(isNearScreen(jelly.x, jelly.y, 50) && Math.hypot(player.x-jelly.x, player.y-jelly.y) < 32){
+            damagePlayer("Uma água-viva te queimou!");
         }
     }
 
-    // tubarões
     for(let shark of sharks){
+        // Lógica de piscar e invulnerabilidade do tubarão
+        if(shark.invulnerable){
+            shark.blinkTimer--;
+            // Alterna o visual de piscar a cada 5 frames
+            if(shark.blinkTimer % 5 === 0){
+                shark.blink = !shark.blink;
+            }
+            if(shark.blinkTimer <= 0){
+                shark.invulnerable = false;
+                shark.blink = false;
+            }
+        }
 
-        // cansado após morder
         if(shark.tiredTimer > 0){
-
             shark.tiredTimer--;
-
             shark.currentSpeed = shark.speed * 0.35;
-
         } else {
-
             shark.currentSpeed = shark.speed;
         }
 
-        // movimento horizontal
+        let oldX = shark.x;
         shark.x += shark.dir * shark.swimSpeed;
+        
+        if(player.levels.boat === 2 && isNearScreen(shark.x, shark.y)) {
+            if(checkIceCollision(shark.x + shark.w/2, shark.y + shark.h/2, 20)) {
+                shark.dir *= -1; shark.x = oldX;
+            }
+        }
 
+        shark.facingRight = shark.dir > 0;
         shark.timer++;
-
         if(shark.timer > shark.moveTime){
-
-            shark.timer = 0;
-
-            shark.dir *= -1;
-
+            shark.timer = 0; shark.dir *= -1;
             shark.moveTime = rand(80,240);
         }
 
-        let dx = player.x - shark.x;
-        let dy = player.y - shark.y;
+        if (isNearScreen(shark.x, shark.y, 400)) {
+            let dx = player.x - (shark.x + shark.w/2);
+            let dy = player.y - (shark.y + shark.h/2);
+            let dist = Math.hypot(dx,dy);
 
-        let dist = Math.hypot(dx,dy);
+            if(dist < shark.activeDistance){
+                let angle = Math.atan2(dy,dx);
+                let sx = Math.cos(angle)*shark.currentSpeed;
+                let sy = Math.sin(angle)*shark.currentSpeed;
+                
+                shark.x += sx;
+                if(checkIceCollision(shark.x + shark.w/2, shark.y + shark.h/2, 20)) shark.x -= sx;
+                
+                shark.y += sy;
+                if(checkIceCollision(shark.x + shark.w/2, shark.y + shark.h/2, 20)) shark.y -= sy;
+            }
 
-        // perseguir jogador
-        if(dist < shark.activeDistance){
-
-            let angle = Math.atan2(dy,dx);
-
-            shark.x += Math.cos(angle)*shark.currentSpeed;
-            shark.y += Math.sin(angle)*shark.currentSpeed;
-        }
-
-        // ataque
-        if(dist < 45){
-
-            if(!player.invulnerable){
-
+            if(dist < 42 && !player.invulnerable){
                 shark.tiredTimer = 240;
-
-                damagePlayer("um tubarão te atacou");
+                damagePlayer("Um tubarão te atacou!");
             }
         }
     }
 }
 
 function updateHarpoon(){
-
     if(!harpoon.active) return;
 
     if(!harpoon.returning){
-
         harpoon.x += harpoon.vx;
         harpoon.y += harpoon.vy;
 
-        // peixe
+        if(checkIceCollision(harpoon.x, harpoon.y, 6)) {
+            harpoon.returning = true;
+        }
+
         for(let fish of fishes){
-
-            if(Math.hypot(
-                fish.x-harpoon.x,
-                fish.y-harpoon.y
-            ) < fish.r + 5){
-
-                harpoon.returning = true;
-
-                harpoon.target = fish;
-                harpoon.targetType = "fish";
-
-                break;
+            if(isNearScreen(fish.x, fish.y, 100)) {
+                if(Math.hypot(fish.x-harpoon.x, fish.y-harpoon.y) < fish.r + 6){
+                    harpoon.returning = true; harpoon.target = fish; harpoon.targetType = "fish";
+                    break;
+                }
             }
         }
 
-        // lixo
         if(!harpoon.returning){
-
             for(let trash of trashes){
-
-                if(Math.hypot(
-                    trash.x-harpoon.x,
-                    trash.y-harpoon.y
-                ) < trash.r + 5){
-
-                    harpoon.returning = true;
-
-                    harpoon.target = trash;
-                    harpoon.targetType = "trash";
-
-                    break;
-                }
-            }
-        }
-
-        // atacar tubarão
-        if(
-            !harpoon.returning &&
-            player.harpoonLevel >= 5
-        ){
-
-            for(let shark of sharks){
-
-                if(
-                    Math.hypot(
-                        shark.x-harpoon.x,
-                        shark.y-harpoon.y
-                    ) < 45
-                ){
-
-                    shark.hp--;
-
-                    showMessage(
-                        "você acertou um tubarão"
-                    );
-
-                    let neededHits =
-                        Math.max(
-                            3,
-                            10 - player.harpoonLevel
-                        );
-
-                    if(shark.hp <= 10-neededHits){
-
-                        sharks.splice(
-                            sharks.indexOf(shark),
-                            1
-                        );
-
-                        player.score += 50;
-
-                        showMessage(
-                            "tubarão derrotado"
-                        );
+                if(isNearScreen(trash.x, trash.y, 100)) {
+                    if(Math.hypot(trash.x-harpoon.x, trash.y-harpoon.y) < trash.r + 6){
+                        harpoon.returning = true; harpoon.target = trash; harpoon.targetType = "trash";
+                        break;
                     }
-
-                    harpoon.returning = true;
-
-                    break;
                 }
             }
         }
 
+        // Nova colisão baseada no Arpão Perfurante
+        if(!harpoon.returning && player.levels.piercingHarpoon > 0){
+            for(let shark of sharks){
+                if(isNearScreen(shark.x, shark.y, 100)) {
+                    if(Math.hypot((shark.x + shark.w/2)-harpoon.x, (shark.y + shark.h/2)-harpoon.y) < 40){
+                        
+                        // Só causa dano se o tubarão não estiver em frames de invulnerabilidade
+                        if(!shark.invulnerable) {
+                            // Cálculo progressivo: Nvl 1 = 10 hits (tira 1 de hp), Nvl 5 = 2 hits (tira 5 de hp)
+                            let damagePerHit = 1;
+                            if(player.levels.piercingHarpoon === 1) damagePerHit = 1;
+                            else if(player.levels.piercingHarpoon === 2) damagePerHit = 2; // 5 hits
+                            else if(player.levels.piercingHarpoon === 3) damagePerHit = 2.5; // 4 hits
+                            else if(player.levels.piercingHarpoon === 4) damagePerHit = 3.34; // 3 hits
+                            else if(player.levels.piercingHarpoon === 5) damagePerHit = 5; // 2 hits
+
+                            shark.hp -= damagePerHit;
+                            shark.invulnerable = true;
+                            shark.blinkTimer = 60; // 1 segundo a 60 FPS
+                            showMessage("Você feriu um tubarão!");
+
+                            if(shark.hp <= 0){
+                                sharks.splice(sharks.indexOf(shark), 1);
+                                player.score += 50;
+                                showMessage("Tubarão derrotado!");
+                            }
+                        }
+                        harpoon.returning = true;
+                        break;
+                    }
+                }
+            }
+        }
     } else {
-
-        let angle = Math.atan2(
-            player.y-harpoon.y,
-            player.x-harpoon.x
-        );
-
-        harpoon.x += Math.cos(angle)*20;
-        harpoon.y += Math.sin(angle)*20;
+        let angle = Math.atan2(player.y-harpoon.y, player.x-harpoon.x);
+        harpoon.x += Math.cos(angle)*22;
+        harpoon.y += Math.sin(angle)*22;
 
         if(harpoon.target){
-
             harpoon.target.x = harpoon.x;
             harpoon.target.y = harpoon.y;
         }
 
-        if(
-            Math.hypot(
-                player.x-harpoon.x,
-                player.y-harpoon.y
-            ) < 20
-        ){
-
+        if(Math.hypot(player.x-harpoon.x, player.y-harpoon.y) < 22){
             if(harpoon.target){
-
-                // peixe
                 if(harpoon.targetType === "fish"){
-
-                    player.score -= 5;
-
+                    player.score = Math.max(0, player.score - 5);
                     player.inventory += 5;
-
-                    showMessage(
-                        "você capturou um peixe"
-                    );
-
-                    let index =
-                        fishes.indexOf(harpoon.target);
-
-                    if(index !== -1){
-                        fishes.splice(index,1);
-                    }
+                    showMessage("Você capturou um peixe!");
+                    let index = fishes.indexOf(harpoon.target);
+                    if(index !== -1) fishes.splice(index,1);
                 }
-
-                // lixo
                 if(harpoon.targetType === "trash"){
-
-                    if(
-                        player.inventory <
-                        player.inventoryMax
-                    ){
-
-                        player.score +=
-                            harpoon.target.points || 10;
-
+                    if(player.inventory < player.inventoryMax){
+                        player.score += harpoon.target.points || 10;
                         player.inventory += 10;
-
-                        showMessage(
-                            "você capturou um lixo"
-                        );
-
+                        showMessage("Lixo recolhido!");
                     } else {
-
-                        showMessage(
-                            "inventário cheio"
-                        );
+                        showMessage("Inventário Cheio!");
                     }
-
-                    let index =
-                        trashes.indexOf(harpoon.target);
-
-                    if(index !== -1){
-                        trashes.splice(index,1);
-                    }
+                    let index = trashes.indexOf(harpoon.target);
+                    if(index !== -1) trashes.splice(index,1);
                 }
             }
 
-            player.inventory = clamp(
-                player.inventory,
-                0,
-                player.inventoryMax
-            );
-
-            harpoon.active = false;
-            harpoon.returning = false;
-
-            harpoon.target = null;
-            harpoon.targetType = null;
+            player.inventory = clamp(player.inventory, 0, player.inventoryMax);
+            harpoon.active = false; harpoon.returning = false;
+            harpoon.target = null; harpoon.targetType = null;
         }
     }
 
-    // distância máxima
-    if(
-        !harpoon.returning &&
-        Math.hypot(
-            harpoon.x-player.x,
-            harpoon.y-player.y
-        ) > 500
-    ){
+    if(!harpoon.returning && Math.hypot(harpoon.x-player.x, harpoon.y-player.y) > 500){
         harpoon.returning = true;
     }
 }
 
 function drawBoatArrow(){
-
-    let bx = boat.x - cameraX;
-    let by = boat.y - cameraY;
-
-    let offscreen =
-        bx < 0 ||
-        bx > canvas.width ||
-        by < 0 ||
-        by > canvas.height;
-
+    let bx = boat.x - cameraX; let by = boat.y - cameraY;
+    let offscreen = bx < 0 || bx > canvas.width || by < 0 || by > canvas.height;
     if(!offscreen) return;
 
-    let cx = canvas.width/2;
-    let cy = canvas.height/2;
-
-    let angle = Math.atan2(by-cy,bx-cx);
-
+    let cx = canvas.width/2; let cy = canvas.height/2;
+    let angle = Math.atan2(by-cy, bx-cx);
     let radius = 120;
-
-    let ax = cx + Math.cos(angle)*radius;
-    let ay = cy + Math.sin(angle)*radius;
+    let ax = cx + Math.cos(angle)*radius; let ay = cy + Math.sin(angle)*radius;
 
     ctx.save();
-
-    ctx.translate(ax,ay);
-    ctx.rotate(angle);
-
+    ctx.translate(ax,ay); ctx.rotate(angle);
     ctx.fillStyle = "yellow";
-
     ctx.beginPath();
-
-    ctx.moveTo(20,0);
-    ctx.lineTo(-10,-10);
-    ctx.lineTo(-10,10);
-
-    ctx.closePath();
-    ctx.fill();
-
+    ctx.moveTo(20,0); ctx.lineTo(-10,-10); ctx.lineTo(-10,10);
+    ctx.closePath(); ctx.fill();
     ctx.restore();
 }
 
 function drawHearts(){
-
-    for(let i=0;i<player.maxHp;i++){
-
-        ctx.fillStyle =
-            i < player.hp
-            ? "red"
-            : "#440000";
-
+    for(let i=0; i<player.maxHp; i++){
+        ctx.fillStyle = i < player.hp ? "#ff2a55" : "#3a0010";
         ctx.beginPath();
-
-        ctx.arc(
-            25 + i*35,
-            25,
-            10,
-            0,
-            Math.PI*2
-        );
-
+        ctx.arc(25 + i*35, 25, 10, 0, Math.PI*2);
         ctx.fill();
     }
 }
 
 function drawBars(){
+    ctx.fillStyle = "#112233";
+    ctx.fillRect(20, canvas.height-180, 24, 150);
+    ctx.fillStyle = "#00e5ff";
+    let oxyHeight = (player.oxygen/player.oxygenMax)*150;
+    ctx.fillRect(20, canvas.height-30-oxyHeight, 24, oxyHeight);
 
-    // oxigênio
-    ctx.fillStyle = "#222";
-    ctx.fillRect(20,canvas.height-180,24,150);
-
-    ctx.fillStyle = "#00bbff";
-
-    let oxyHeight =
-        (player.oxygen/player.oxygenMax)*150;
-
-    ctx.fillRect(
-        20,
-        canvas.height-30-oxyHeight,
-        24,
-        oxyHeight
-    );
-
-    // inventário
-    ctx.fillStyle = "#222";
-    ctx.fillRect(55,canvas.height-180,24,150);
-
-    ctx.fillStyle = "#66ff66";
-
-    let invHeight =
-        (player.inventory/player.inventoryMax)*150;
-
-    ctx.fillRect(
-        55,
-        canvas.height-30-invHeight,
-        24,
-        invHeight
-    );
+    ctx.fillStyle = "#112233";
+    ctx.fillRect(55, canvas.height-180, 24, 150);
+    ctx.fillStyle = "#00ffaa";
+    let invHeight = (player.inventory/player.inventoryMax)*150;
+    ctx.fillRect(55, canvas.height-30-invHeight, 24, invHeight);
 }
 
 function drawBoostBar(){
-
-    let width = 300;
-
-    let x = 100;
-    let y = canvas.height - 40;
-
-    ctx.fillStyle = "#222";
-
+    let width = 300; let x = 100; let y = canvas.height - 40;
+    ctx.fillStyle = "#112233";
     ctx.fillRect(x,y,width,18);
 
-    let percent;
-
-    if(!player.hasBoost){
-
-        percent = 0;
-
-    } else if(player.boostCooldown <= 0){
-
-        percent = 1;
-
-    } else {
-
-        percent =
-            1 -
-            (
-                player.boostCooldown /
-                player.boostCooldownMax
-            );
-    }
+    let percent = !player.hasBoost ? 0 : (player.boostCooldown <= 0 ? 1 : 1 - (player.boostCooldown / player.boostCooldownMax));
 
     ctx.fillStyle = "#ffee00";
-
-    ctx.fillRect(
-        x,
-        y,
-        width*percent,
-        18
-    );
+    ctx.fillRect(x, y, width*percent, 18);
 
     ctx.fillStyle = "white";
-
-    ctx.font = "18px Arial";
-
-    ctx.fillText(
-        message,
-        x,
-        y-10
-    );
+    ctx.font = "16px Arial";
+    ctx.fillText(message, x, y-10);
 }
 
 function draw(){
-
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-
-    let gradient = ctx.createLinearGradient(
-        0,0,0,canvas.height
-    );
-
-    gradient.addColorStop(0,"#5ad4ff");
-    gradient.addColorStop(0.3,"#006b96");
-    gradient.addColorStop(1,"#001521");
-
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     ctx.save();
+    ctx.translate(-cameraX, -cameraY);
 
-    ctx.translate(-cameraX,-cameraY);
+    const skyWidth = 1200; 
+    const skyHeight = 500;
+    
+    ctx.fillStyle = "#65adcf";
+    ctx.fillRect(-12000, -1500, 24000, 1000); 
 
-    // água
-    ctx.fillStyle = "#8ae8ff";
-    ctx.fillRect(-999999,0,9999999,4);
+    if (skyImg && skyImg.complete && skyImg.naturalWidth > 0) {
+        for (let x = -12000; x < 12000; x += skyWidth) {
+            ctx.drawImage(skyImg, x, -500, skyWidth, skyHeight);
+        }
+    } else {
+        ctx.fillStyle = "#65adcf";
+        ctx.fillRect(-12000, -500, 24000, skyHeight); 
+    }
+    let seaGrad = ctx.createLinearGradient(0, 0, 0, WORLD_LIMIT_Y);
+    if(player.levels.boat === 2) {
+        seaGrad.addColorStop(0, "#cbdfe6");
+        seaGrad.addColorStop(1, "#1c2d38");
+    } else {
+        seaGrad.addColorStop(0, "#006b96");
+        seaGrad.addColorStop(1, "#001521");
+    }
+    ctx.fillStyle = seaGrad;
+    ctx.fillRect(-25000, 0, 50000, 20000);
 
-    // barco
-    ctx.fillStyle = "#6e4423";
+    ctx.fillStyle = player.levels.boat === 2 ? "#eef8ff" : "#8ae8ff";
+    ctx.fillRect(-999999, 0, 9999999, 4);
 
-    ctx.fillRect(
-        boat.x,
-        boat.y,
-        boat.w,
-        boat.h
-    );
+    if(player.levels.boat === 2) {
+        ctx.fillStyle = "rgba(235, 245, 255, 0.85)";
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 3;
+        for(let block of iceBlocks) {
+            if (isNearScreen(block.x, block.y, Math.max(block.w, block.h))) {
+                ctx.fillRect(block.x, block.y, block.w, block.h);
+                ctx.strokeRect(block.x, block.y, block.w, block.h);
+            }
+        }
+    }
 
-    // lixo
+    if (isNearScreen(boat.x, boat.y, 400)) {
+        const boatAspect = (boatImg.naturalHeight / boatImg.naturalWidth) || 0.5;
+        const boatDrawW = boat.w; const boatDrawH = boatDrawW * boatAspect;
+        if (boatImg.complete && boatImg.naturalWidth > 0) {
+            ctx.drawImage(boatImg, boat.x - boatDrawW/2, boat.y - boatDrawH/1.3, boatDrawW, boatDrawH);
+        } else {
+            ctx.fillStyle = "#6e4423"; ctx.fillRect(boat.x, boat.y, boat.w, boat.h);
+        }
+    }
+
     for(let trash of trashes){
-
-        ctx.fillStyle = "#67ff67";
-
-        ctx.beginPath();
-
-        ctx.arc(
-            trash.x,
-            trash.y,
-            trash.r,
-            0,
-            Math.PI*2
-        );
-
-        ctx.fill();
+        if (isNearScreen(trash.x, trash.y)) {
+            ctx.fillStyle = "#00ffaa"; ctx.beginPath();
+            ctx.arc(trash.x, trash.y, trash.r, 0, Math.PI*2); ctx.fill();
+        }
     }
 
-    // peixes
     for(let fish of fishes){
-
-        ctx.fillStyle = "orange";
-
-        ctx.beginPath();
-
-        ctx.arc(
-            fish.x,
-            fish.y,
-            fish.r,
-            0,
-            Math.PI*2
-        );
-
-        ctx.fill();
+        if (isNearScreen(fish.x, fish.y)) {
+            ctx.save();
+            if(fish.dir === -1){
+                ctx.translate(fish.x, fish.y); ctx.scale(-1, 1);
+                if(fish.img.complete && fish.img.naturalWidth > 0) {
+                    ctx.drawImage(fish.img, -fish.r, -fish.r, fish.r * 2, fish.r * 2);
+                } else {
+                    ctx.fillStyle = "orange"; ctx.beginPath(); ctx.arc(0, 0, fish.r, 0, Math.PI*2); ctx.fill();
+                }
+            } else {
+                if(fish.img.complete && fish.img.naturalWidth > 0) {
+                    ctx.drawImage(fish.img, fish.x - fish.r, fish.y - fish.r, fish.r * 2, fish.r * 2);
+                } else {
+                    ctx.fillStyle = "orange"; ctx.beginPath(); ctx.arc(fish.x, fish.y, fish.r, 0, Math.PI*2); ctx.fill();
+                }
+            }
+            ctx.restore();
+        }
     }
 
-    // águas vivas
     for(let jelly of jellys){
-
-        ctx.fillStyle = "#ff66ff";
-
-        ctx.beginPath();
-
-        ctx.arc(
-            jelly.x,
-            jelly.y,
-            18,
-            0,
-            Math.PI*2
-        );
-
-        ctx.fill();
+        if (isNearScreen(jelly.x, jelly.y)) {
+            ctx.fillStyle = "#ff55ff"; ctx.beginPath();
+            ctx.arc(jelly.x, jelly.y, 18, 0, Math.PI*2); ctx.fill();
+        }
     }
 
-    // tubarões
     for(let shark of sharks){
+        if (isNearScreen(shark.x, shark.y, 200)) {
+            // Esconde visualmente o tubarão se ele estiver no frame invisível do piscar
+            if (shark.blink) continue;
 
-        ctx.fillStyle = "gray";
-
-        ctx.fillRect(
-            shark.x,
-            shark.y,
-            shark.w,
-            shark.h
-        );
+            ctx.save();
+            if(shark.facingRight){
+                ctx.translate(shark.x + shark.w, shark.y); ctx.scale(-1,1);
+                ctx.drawImage(sharkImg, 0, 0, shark.w, shark.h);
+            } else {
+                ctx.drawImage(sharkImg, shark.x, shark.y, shark.w, shark.h);
+            }
+            ctx.restore();
+        }
     }
 
-    // jogador
     if(!player.blink){
-
-        ctx.fillStyle = "yellow";
-
-        ctx.beginPath();
-
-        ctx.arc(
-            player.x,
-            player.y,
-            20,
-            0,
-            Math.PI*2
-        );
-
-        ctx.fill();
+        ctx.save();
+        ctx.translate(player.x, player.y);
+        
+        if(player.facingLeft) {
+            ctx.scale(-1, 1); 
+        }
+        
+        if (diverImg.complete && diverImg.naturalWidth > 0) {
+            ctx.drawImage(diverImg, -20, -20, 60, 60);
+        } else {
+            ctx.fillStyle = "#ffd700"; ctx.beginPath();
+            ctx.arc(0, 0, 18, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = "#001521"; ctx.beginPath();
+            ctx.arc(6, -2, 6, 0, Math.PI*2); ctx.fill();
+        }
+        
+        ctx.restore();
     }
 
-    // arpão
     if(harpoon.active){
-
-        ctx.strokeStyle = "white";
-
-        ctx.beginPath();
-
-        ctx.moveTo(player.x,player.y);
-        ctx.lineTo(harpoon.x,harpoon.y);
-
-        ctx.stroke();
-
-        ctx.fillStyle = "red";
-
-        ctx.beginPath();
-
-        ctx.arc(
-            harpoon.x,
-            harpoon.y,
-            6,
-            0,
-            Math.PI*2
-        );
-
-        ctx.fill();
+        ctx.strokeStyle = "rgba(255,255,255,0.6)"; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(player.x, player.y); ctx.lineTo(harpoon.x, harpoon.y); ctx.stroke();
+        ctx.fillStyle = "#ff3333"; ctx.beginPath(); ctx.arc(harpoon.x, harpoon.y, 6, 0, Math.PI*2); ctx.fill();
     }
 
     ctx.restore();
 
     drawBoatArrow();
-
-    // HUD
     drawHearts();
-
-    ctx.fillStyle = "white";
-    ctx.font = "24px Arial";
-
-    ctx.fillText(
-        "Pontos: " + Math.floor(player.score),
-        20,
-        70
-    );
-
     drawBars();
-
     drawBoostBar();
+
+    ctx.fillStyle = "white"; ctx.font = "bold 20px Arial";
+    ctx.fillText("Score: " + Math.floor(player.score), 20, 75);
 }
 
 function updateUI(){
+    const precoBoost = Math.floor(90 * Math.pow(1.40, player.levels.boost));
+    const precoOxygen = Math.floor(120 * Math.pow(1.35, player.levels.oxygen));
+    const precoInventory = Math.floor(100 * Math.pow(1.30, player.levels.inventory));
+    const precoLife = Math.floor(140 * Math.pow(1.50, player.levels.life));
+    const precoHarpoon = Math.floor(150 * Math.pow(1.35, player.levels.harpoon));
+    const precoPiercingHarpoon = Math.floor(180 * Math.pow(1.45, player.levels.piercingHarpoon)); // Preço do novo upgrade
+    const precoBoat = 1000; 
 
-    shopMoneyValue.textContent =
-        Math.floor(player.money);
+    if(shopMoneyValue) shopMoneyValue.textContent = Math.floor(player.money);
+    
+    document.getElementById("info-boost").textContent = `Nível: ${player.levels.boost}/10`;
+    document.getElementById("info-oxygen").textContent = `Nível: ${player.levels.oxygen}/10`;
+    document.getElementById("info-inventory").textContent = `Nível: ${player.levels.inventory}/10`;
+    document.getElementById("info-life").textContent = `Nível: ${player.levels.life}/10`;
+    document.getElementById("info-harpoon").textContent = `Nível: ${player.levels.harpoon}/10`;
+    if(document.getElementById("info-piercing-harpoon")) {
+        document.getElementById("info-piercing-harpoon").textContent = `Nível: ${player.levels.piercingHarpoon}/5`;
+    }
+    document.getElementById("info-boat").textContent = `Nível: ${player.levels.boat}/2 ${player.levels.boat === 2 ? '(MÁX)' : ''}`;
+
+    document.getElementById("btn-boost").textContent = player.levels.boost >= 10 ? "MÁXIMO" : `Melhorar Pé de Pato (${precoBoost} Moedas)`;
+    document.getElementById("btn-oxygen").textContent = player.levels.oxygen >= 10 ? "MÁXIMO" : `Melhorar Oxigênio (${precoOxygen} Moedas)`;
+    document.getElementById("btn-inventory").textContent = player.levels.inventory >= 10 ? "MÁXIMO" : `Expandir Inventário (${precoInventory} Moedas)`;
+    document.getElementById("btn-life").textContent = player.levels.life >= 10 ? "MÁXIMO" : `Aumentar Vida (${precoLife} Moedas)`;
+    document.getElementById("btn-harpoon").textContent = player.levels.harpoon >= 10 ? "MÁXIMO" : `Melhorar captura de lixo (${precoHarpoon} Moedas)`;
+    if(document.getElementById("btn-piercing-harpoon")) {
+        document.getElementById("btn-piercing-harpoon").textContent = player.levels.piercingHarpoon >= 5 ? "MÁXIMO" : `Arpão Perfurante (${precoPiercingHarpoon} Moedas)`;
+    }
+    document.getElementById("btn-boat").textContent = player.levels.boat >= 2 ? "MÁXIMO" : `Barco (${precoBoat} Moedas)`;
+
+    document.getElementById("btn-boost").disabled = (player.levels.boost >= 10);
+    document.getElementById("btn-oxygen").disabled = (player.levels.oxygen >= 10);
+    document.getElementById("btn-inventory").disabled = (player.levels.inventory >= 10);
+    document.getElementById("btn-life").disabled = (player.levels.life >= 10);
+    document.getElementById("btn-harpoon").disabled = (player.levels.harpoon >= 10);
+    if(document.getElementById("btn-piercing-harpoon")) {
+        document.getElementById("btn-piercing-harpoon").disabled = (player.levels.piercingHarpoon >= 5);
+    }
+    document.getElementById("btn-boat").disabled = (player.levels.boat >= 2);
 }
 
-function openShop(){
-
+function triggerGameOver(reason) {
     player.canMove = false;
-
-    player.money += Math.max(
-        0,
-        Math.floor(player.score)
-    );
-
+    gameStarted = false; 
+    quickShopBtn.style.display = "none";
+    
+    let pontosConvertidos = Math.max(0, Math.floor(player.score));
+    player.money += pontosConvertidos;
+    
     player.score = 0;
 
-    shop.style.display = "flex";
+    updateUI(); 
+    if(shopMoneyValue) {
+        shopMoneyValue.textContent = Math.floor(player.money);
+    }
+
+    deathReasonText.textContent = reason;
+    gameOverScreen.style.display = "flex";
 }
-
 function continueGame(){
-
     shop.style.display = "none";
+    gameOverScreen.style.display = "none";
+    quickShopBtn.style.display = "block";
 
-    player.x = 0;
-    player.y = -220;
-
+    player.x = 0; 
+    player.y = -220; 
     player.vy = 0;
-
     player.jumping = true;
-
     player.oxygen = player.oxygenMax;
-
     player.hp = player.maxHp;
-
     player.inventory = 0;
+    player.score = 0;
+
+    updateUI(); 
+    gameStarted = true;
 
     spawnWorld();
 }
 
 function buyBoost(){
+    let precoBase = 90;
+    let taxa = 1.40; 
+    let precoAtual = Math.floor(precoBase * Math.pow(taxa, player.levels.boost));
 
-    if(player.money >= 90){
-
-        player.money -= 90;
-
+    if(player.money >= precoAtual && player.levels.boost < 10){
+        player.money -= precoAtual;
+        player.levels.boost++;
         player.hasBoost = true;
-
-        player.boostLevel++;
-
-        player.boostPower += 1;
-
-        player.boostCooldownMax =
-            Math.max(
-                300,
-                player.boostCooldownMax - 120
-            );
-
-        showMessage("pé de pato melhorado");
+        player.boostPower += 0.8;
+        player.boostCooldownMax = Math.max(300, player.boostCooldownMax - 90);
+        showMessage("Pé de Pato Melhorado!");
+        updateUI();
     }
 }
 
 function buyOxygen(){
+    let precoBase = 120;
+    let taxa = 1.35; 
+    let precoAtual = Math.floor(precoBase * Math.pow(taxa, player.levels.oxygen));
 
-    if(player.money >= 120){
-
-        player.money -= 120;
-
-        player.oxygenMax += 50;
-
-        showMessage("tanque melhorado");
+    if(player.money >= precoAtual && player.levels.oxygen < 10){
+        player.money -= precoAtual;
+        player.levels.oxygen++;
+        player.oxygenMax += 35;
+        player.oxygen = player.oxygenMax;
+        showMessage("Capacidade de Oxigênio Aumentada!");
+        updateUI();
     }
 }
 
 function buyInventory(){
+    let precoBase = 100;
+    let taxa = 1.30; 
+    let precoAtual = Math.floor(precoBase * Math.pow(taxa, player.levels.inventory));
 
-    if(player.money >= 100){
-
-        player.money -= 100;
-
-        player.inventoryMax += 50;
-
-        showMessage("inventário melhorado");
+    if(player.money >= precoAtual && player.levels.inventory < 10){
+        player.money -= precoAtual;
+        player.levels.inventory++;
+        player.inventoryMax += 40;
+        showMessage("Tamanho do Inventário Expandido!");
+        updateUI();
     }
 }
 
 function buyLife(){
+    let precoBase = 140;
+    let taxa = 1.50; 
+    let precoAtual = Math.floor(precoBase * Math.pow(taxa, player.levels.life));
 
-    if(player.money >= 140){
-
-        player.money -= 140;
-
+    if(player.money >= precoAtual && player.levels.life < 10){
+        player.money -= precoAtual;
+        player.levels.life++;
         player.maxHp++;
-
-        showMessage("vida aumentada");
+        player.hp = player.maxHp;
+        showMessage("Resistência de Vida Aumentada!");
+        updateUI();
     }
 }
 
 function buyHarpoon(){
+    let precoBase = 150;
+    let taxa = 1.35; 
+    let precoAtual = Math.floor(precoBase * Math.pow(taxa, player.levels.harpoon));
 
-    if(player.money >= 150){
-
-        player.money -= 150;
-
-        player.harpoonLevel++;
-
-        harpoon.speed += 2;
-
-        showMessage("arpão melhorado");
+    if(player.money >= precoAtual && player.levels.harpoon < 10){
+        player.money -= precoAtual;
+        player.levels.harpoon++;
+        showMessage("Arpão Melhorado! Mais poluição surgirá nas águas.");
+        updateUI();
     }
 }
 
-function gameLoop(){
+// FUNÇÃO PARA COMPRAR O NOVO UPGRADE
+function buyPiercingHarpoon(){
+    let precoBase = 180;
+    let taxa = 1.45; 
+    let precoAtual = Math.floor(precoBase * Math.pow(taxa, player.levels.piercingHarpoon));
+
+    if(player.money >= precoAtual && player.levels.piercingHarpoon < 5){
+        player.money -= precoAtual;
+        player.levels.piercingHarpoon++;
+        showMessage("Arpão Perfurante Melhorado! Dano contra Tubarões aumentado.");
+        updateUI();
+    }
+}
+
+function buyBoatUpgrade() {
+    if(player.money >= 1000 && player.levels.boat === 1) {
+        player.money -= 1000;
+        player.levels.boat = 2;
+
+        player.levels.boost = 0;
+        player.levels.oxygen = 0;
+        player.levels.inventory = 0;
+        player.levels.life = 0;
+        player.levels.harpoon = 0;
+        player.levels.piercingHarpoon = 0; // Reseta o perfurante também se mudar de barco
+
+        player.hasBoost = false;
+        player.boostPower = 2;
+        player.boostCooldownMax = 1200;
+        player.oxygenMax = 100;
+        player.inventoryMax = 100;
+        player.maxHp = 3;
+        harpoon.speed = 15;
+
+        showMessage("Barco Quebra-Gelo Adquirido! Novo Bioma Desbloqueado! Atributos Resetados.");
+        updateUI();
+    }
+}
+
+let lastTime = 0;
+const fpsInterval = 1000 / 60;
+
+function gameLoop(timestamp){
+    requestAnimationFrame(gameLoop);
+
+    let elapsed = timestamp - lastTime;
+    if (elapsed < fpsInterval) return;
+    lastTime = timestamp - (elapsed % fpsInterval);
 
     updatePlayer();
-
     updateCreatures();
-
     updateHarpoon();
-
     draw();
 
-    updateUI();
+    if(messageTimer > 0){ messageTimer--; } else { message = ""; }
 
-    if(messageTimer > 0){
-        messageTimer--;
-    } else {
-        message = "";
+    if(player.canMove) {
+        if(player.oxygen <= 0) {
+            triggerGameOver("O seu oxigênio acabou!");
+        } else if(player.hp <= 0) {
+            triggerGameOver("Você sofreu ferimentos fatais das criaturas!");
+        }
     }
-
-    if(
-        player.canMove &&
-        (
-            player.oxygen <= 0 ||
-            player.hp <= 0
-        )
-    ){
-        openShop();
-    }
-
-    requestAnimationFrame(gameLoop);
 }
 
-gameLoop();
-
+gameLoop(0);
 </script>
 </body>
 </html>
