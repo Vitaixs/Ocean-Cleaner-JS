@@ -134,7 +134,7 @@
         gap: 15px;
         max-width: 800px;
         width: 100%;
-        margin: 20px 0;
+        margin: 0px 0px 20px;
     }
     @media (max-width: 600px) {
         .shop-grid { grid-template-columns: 1fr; }
@@ -172,6 +172,31 @@
         margin: 20px 0;
         text-shadow: 0 0 10px rgba(255, 74, 74, 0.3);
     }
+    .shop-scroll-container {
+    max-height: 60vh; /* Limita a altura a 60% da altura da tela do jogador */
+    overflow-y: auto; /* Adiciona o scroll vertical se o conteúdo passar do limite */
+    padding-right: 10px; /* Espaço para a barra não cobrir o conteúdo */
+    margin-bottom: 20px; /* Distância do botão "Voltar ao Mar" */
+}
+
+/* OPCIONAL: Customizar a barra de rolagem para ficar com visual de jogo */
+.shop-scroll-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.shop-scroll-container::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+}
+
+.shop-scroll-container::-webkit-scrollbar-thumb {
+    background: #00ffaa; /* Cor combinando com o seu botão */
+    border-radius: 4px;
+}
+
+.shop-scroll-container::-webkit-scrollbar-thumb:hover {
+    background: #00cc88;
+}
 </style>
 </head>
 <body>
@@ -181,7 +206,7 @@
 <div id="menu" class="overlay-screen">
     <h1>OCEAN CLEANER</h1>
     <h2>A Ocean Rogue-like</h2>
-    <p>Limpe os oceanos da poluição, desvie das ameaças e gerencie seu oxigênio.</p>
+    <p>"Limpe os oceanos enquanto foge de predadores hostis e evite capturar peixes. Quando o tanque de oxigênio acabar ou as suas vidas terminarem, seus pontos serão convertidos em moedas. Use-as no menu de compras para melhorar seus equipamentos e limpar o oceano ainda mais rápido!    </p>
 
     <div class="controls-box">
         <h3>Comandos do Jogo:</h3>
@@ -194,8 +219,9 @@
 </div>
 
 <div id="gameOverScreen" class="overlay-screen" style="display: none;">
-    <h1>SE FODEU</h1>
+    <h1>Fim da linha!</h1>
     <div id="deathReasonText" class="death-reason">Você ficou sem oxigênio!</div>
+    <p>Seus pontos foram convertidos em moedas.</p>
     <p>O que deseja fazer agora?</p>
     <div style="margin-top: 20px;">
         <button onclick="openShopFromGameOver()">Ir para a Loja</button>
@@ -206,11 +232,12 @@
 <div id="shop" class="overlay-screen" style="display: none;">
     <h1>LOJA DE UPGRADES</h1>
     <div id="shopMoney">Saldo: $<span id="shopMoneyValue">0</span></div>
-
+    <div class="shop-scroll-container">
     <div class="shop-grid">
         <div class="shop-item">
             <div>
                 <strong>Pé de Pato</strong>
+                <div class="item-info">Ao clicar espaço, o mergulhador ganha um pequeno estimulo de velocidade.</div>
                 <div class="item-info" id="info-boost">Nível: 0/10</div>
             </div>
             <button id="btn-boost" onclick="buyBoost()">Melhorar ($90)</button>
@@ -219,6 +246,7 @@
         <div class="shop-item">
             <div>
                 <strong>Tanque de Oxigênio</strong>
+                <div class="item-info">Será possível respirar ainda mais tempo na água.</div>
                 <div class="item-info" id="info-oxygen">Nível: 0/10</div>
             </div>
             <button id="btn-oxygen" onclick="buyOxygen()">Melhorar ($120)</button>
@@ -227,6 +255,7 @@
         <div class="shop-item">
             <div>
                 <strong>Mochila de Inventário</strong>
+                <div class="item-info">Colete ainda mais lixo antes de voltar para o barco!</div>
                 <div class="item-info" id="info-inventory">Nível: 0/10</div>
             </div>
             <button id="btn-inventory" onclick="buyInventory()">Melhorar ($100)</button>
@@ -235,6 +264,7 @@
         <div class="shop-item">
             <div>
                 <strong>Resistência (Vida Máxima)</strong>
+                <div class="item-info">O mergulhador sobreviverá a mais ataques de animais hostis.</div>
                 <div class="item-info" id="info-life">Nível: 0/10</div>
             </div>
             <button id="btn-life" onclick="buyLife()">Melhorar ($140)</button>
@@ -243,6 +273,7 @@
         <div class="shop-item">
             <div>
                 <strong>Arpão de Captura</strong>
+                <div class="item-info">Será mais fácil de encontrar lixo.</div>
                 <div class="item-info" id="info-harpoon">Nível: 0/10</div>
             </div>
             <button id="btn-harpoon" onclick="buyHarpoon()">Melhorar ($150)</button>
@@ -251,6 +282,7 @@
         <div class="shop-item">
     <div>
         <strong>Arpão Perfurante</strong>
+        <div class="item-info">Com o arpão perfurante é possivel ferir tubarões.</div>
         <div class="item-info" id="info-piercing-harpoon">Nível: 0/5</div>
     </div>
     <button id="btn-piercing-harpoon" onclick="buyPiercingHarpoon()">Melhorar ($180)</button>
@@ -259,13 +291,15 @@
         <div class="shop-item" style="grid-column: span 1;">
             <div>
                 <strong>Barco</strong>
+                <div class="item-info">Novo barco, novo bioma!</div>
                 <div class="item-info" id="info-boat">Nível: 1/2</div>
             </div>
             <button id="btn-boat" onclick="buyBoatUpgrade()">Novo Bioma ($1000)</button>
         </div>
     </div>
+    </div>
 
-    <button onclick="continueGame()" style="margin-top: 15px; border-color: #00ffaa; color: #00ffaa; width: 200px;">VOLTAR AO MAR</button>
+    <button onclick="continueGame()" style="margin-top: 0px; border-color: #00ffaa; color: #00ffaa; width: 200px;">VOLTAR AO MAR</button>
 </div>
 
 <canvas id="game"></canvas>
@@ -275,12 +309,20 @@ const diverImg = new Image(); diverImg.src = "img/diver.png";
 const sharkImg = new Image(); sharkImg.src = "img/tubarao.png";
 const skyImg = new Image(); skyImg.src = "img/background.jpg";
 const boatImg = new Image(); boatImg.src = "img/barco.png";
+const jellyImg = new Image(); jellyImg.src = "img/jellyfish.png";
 
 const fishImages = [];
 for (let i = 1; i <= 8; i++) {
     const img = new Image();
     img.src = `img/peixe${i}.png`;
     fishImages.push(img);
+}
+
+const trashImages = [];
+for (let i = 1; i <= 5; i++) {
+    const img = new Image();
+    img.src = `img/lixo${i}.png`;
+    trashImages.push(img);
 }
 
 const canvas = document.getElementById("game");
@@ -396,8 +438,18 @@ function spawnWorld(){
     let totalTrash = 220 + (player.levels.harpoon * 30);
     for(let i=0; i<totalTrash; i++){
         let depth = rand(200, WORLD_LIMIT_Y);
+        
+        // 1. Sorteia uma imagem de lixo aleatória do array
+        let randomTrashIndex = Math.floor(Math.random() * trashImages.length);
+        
+        // 2. Sorteia um raio/tamanho aleatório (entre 10 e 22, por exemplo)
+        let randomRadius = rand(20, 42);
+
         trashes.push({
-            x: rand(-WORLD_LIMIT_X, WORLD_LIMIT_X), y: depth, r: 14,
+            x: rand(-WORLD_LIMIT_X, WORLD_LIMIT_X), 
+            y: depth, 
+            r: randomRadius,                      // Tamanho variado adicionado aqui
+            img: trashImages[randomTrashIndex],   // Imagem variada adicionada aqui
             points: Math.floor(depth/250)+10
         });
     }
@@ -419,9 +471,14 @@ function spawnWorld(){
     }
 
     for(let i=0; i<45; i++){
-    jellys.push({ // <--- Agora sim, correto!
-        x: rand(-WORLD_LIMIT_X, WORLD_LIMIT_X), y: rand(300, WORLD_LIMIT_Y),
-        w: 30, h: 50,
+    jellys.push({
+        x: rand(-WORLD_LIMIT_X, WORLD_LIMIT_X), 
+        y: rand(300, WORLD_LIMIT_Y),
+        
+        // APENAS ALTERE ESTES VALORES:
+        w: 75,  // Era 30 (Aumentou a largura)
+        h: 75,  // Era 50 (Aumentou a altura, mantendo a proporção de 1.5x)
+        
         dirX: Math.random()<0.5?-1:1, dirY: Math.random()<0.5?-1:1,
         speedX: rand(0.5,1.4), speedY: rand(0.5,1.4),
         timer: 0, moveTime: rand(60,200)
@@ -890,18 +947,29 @@ function draw(){
         const boatAspect = (boatImg.naturalHeight / boatImg.naturalWidth) || 0.5;
         const boatDrawW = boat.w; const boatDrawH = boatDrawW * boatAspect;
         if (boatImg.complete && boatImg.naturalWidth > 0) {
-            ctx.drawImage(boatImg, boat.x - boatDrawW/2, boat.y - boatDrawH/1.3, boatDrawW, boatDrawH);
+            ctx.drawImage(boatImg, boat.x, boat.y - boatDrawH/1.3, boatDrawW, boatDrawH);
         } else {
             ctx.fillStyle = "#6e4423"; ctx.fillRect(boat.x, boat.y, boat.w, boat.h);
         }
     }
 
-    for(let trash of trashes){
-        if (isNearScreen(trash.x, trash.y)) {
-            ctx.fillStyle = "#00ffaa"; ctx.beginPath();
-            ctx.arc(trash.x, trash.y, trash.r, 0, Math.PI*2); ctx.fill();
-        }
+    for (let trash of trashes) {
+    if (isNearScreen(trash.x, trash.y)) {
+        ctx.save();
+        
+        // Desenha a imagem do lixo centralizada na posição X e Y
+        // A largura e a altura serão o dobro do raio (trash.r * 2)
+        ctx.drawImage(
+            trash.img, 
+            trash.x - trash.r, 
+            trash.y - trash.r, 
+            trash.r * 2, 
+            trash.r * 2
+        );
+        
+        ctx.restore();
     }
+}
 
     for(let fish of fishes){
         if (isNearScreen(fish.x, fish.y)) {
@@ -924,12 +992,23 @@ function draw(){
         }
     }
 
-    for(let jelly of jellys){
-        if (isNearScreen(jelly.x, jelly.y)) {
-            ctx.fillStyle = "#ff55ff"; ctx.beginPath();
-            ctx.arc(jelly.x, jelly.y, 18, 0, Math.PI*2); ctx.fill();
-        }
+    for (let jelly of jellys) {
+    if (isNearScreen(jelly.x, jelly.y)) {
+        ctx.save();
+        
+        // Desenha a imagem centralizada na posição X e Y da água-viva
+        // Usando a largura (w: 30) e altura (h: 50) que você definiu no spawn
+        ctx.drawImage(
+            jellyImg, 
+            jelly.x, 
+            jelly.y, 
+            jelly.w, 
+            jelly.h
+        );
+        
+        ctx.restore();
     }
+}
 
     for(let shark of sharks){
         if (isNearScreen(shark.x, shark.y, 200)) {
@@ -968,10 +1047,38 @@ function draw(){
     }
 
     if(harpoon.active){
-        ctx.strokeStyle = "rgba(255,255,255,0.6)"; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.moveTo(player.x, player.y); ctx.lineTo(harpoon.x, harpoon.y); ctx.stroke();
-        ctx.fillStyle = "#ff3333"; ctx.beginPath(); ctx.arc(harpoon.x, harpoon.y, 6, 0, Math.PI*2); ctx.fill();
-    }
+    // 1. Desenha a corda/linha do arpão
+    ctx.strokeStyle = "rgba(255,255,255,0.6)"; 
+    ctx.lineWidth = 2;
+    ctx.beginPath(); 
+    ctx.moveTo(player.x, player.y); 
+    ctx.lineTo(harpoon.x, harpoon.y); 
+    ctx.stroke();
+    
+    // 2. Desenha a ponta do arpão como uma seta
+    ctx.save();
+    ctx.translate(harpoon.x, harpoon.y); // Move a origem para a ponta do arpão
+    
+    // Calcula o ângulo baseado na velocidade X e Y do arpão
+    let angle = Math.atan2(harpoon.vy, harpoon.vx);
+    ctx.rotate(angle); // Rotaciona o desenho para a direção do tiro
+    
+    // Configura a cor da ponta da seta
+    ctx.fillStyle = "#2e2e2e"; 
+    ctx.beginPath();
+    
+    // Desenha um triângulo apontando para a direita (direção padrão do ângulo 0)
+    let arrowLength = 16; // Comprimento da seta
+    let arrowWidth = 8;   // Largura/grossura da base da seta
+    
+    ctx.moveTo(arrowLength, 0);                 // Ponta da frente
+    ctx.lineTo(0, -arrowWidth);                 // Canto traseiro esquerdo
+    ctx.lineTo(0, arrowWidth);                  // Canto traseiro direito
+    ctx.closePath();
+    
+    ctx.fill();
+    ctx.restore();
+}
 
     ctx.restore();
 
