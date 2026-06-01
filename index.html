@@ -407,7 +407,9 @@
                 totalFrames: 4,
                 tickCount: 0,
                 ticksPerFrame: 8,
-                isMoving: false
+                isMoving: false,
+                idleTimer: 0,
+                idleState: 0
             },
 
             levels: {
@@ -594,6 +596,7 @@
             let oldX = player.x;
             let oldY = player.y;
 
+            
             // Monitora se alguma tecla de direção está pressionada
             player.sprite.isMoving = keys["w"] || keys["s"] || keys["a"] || keys["d"];
 
@@ -1047,41 +1050,54 @@
 
             // RENDERIZAÇÃO DA ANIMAÇÃO DO MERGULHADOR (CORTANDO A SPRITESHEET)
             if (!player.blink) {
-                ctx.save();
-                ctx.translate(player.x, player.y);
+    ctx.save();
+    ctx.translate(player.x, player.y);
 
-                if (player.facingLeft) {
-                    ctx.scale(-1, 1);
-                }
+    if (player.facingLeft) {
+        ctx.scale(-1, 1);
+    }
 
-                if (player.sprite.isMoving) {
-                    // SE ESTIVER ANDANDO: Usa a imagem diver-sheet.png recortada
-                    if (diverSheetImg.complete && diverSheetImg.naturalWidth > 0) {
-                        let sourceX = player.sprite.currentFrame * player.sprite.frameWidth;
+    // Verifica se a spritesheet está carregada de forma global para ambos os estados
+    if (diverSheetImg.complete && diverSheetImg.naturalWidth > 0) {
+        
+        if (player.sprite.isMoving) {
+            // --- SE ESTIVER ANDANDO ---
+            let sourceX = player.sprite.currentFrame * player.sprite.frameWidth;
 
-                        ctx.drawImage(
-                            diverSheetImg,
-                            sourceX, 0,
-                            player.sprite.frameWidth, player.sprite.frameHeight,
-                            -30, -30,
-                            60, 60
-                        );
-                    }
-                } else {
-                    // SE ESTIVER PARADO: Usa a imagem diver.png estática inteira (sem recortar)
-                    if (diverImg.complete && diverImg.naturalWidth > 0) {
-                        ctx.drawImage(diverImg, -30, -30, 60, 60);
-                    } else {
-                        // Desenho de backup caso a imagem não carregue
-                        ctx.fillStyle = "#ffd700"; ctx.beginPath();
-                        ctx.arc(0, 0, 18, 0, Math.PI * 2); ctx.fill();
-                        ctx.fillStyle = "#001521"; ctx.beginPath();
-                        ctx.arc(6, -2, 6, 0, Math.PI * 2); ctx.fill();
-                    }
-                }
+            ctx.drawImage(
+                diverSheetImg,
+                sourceX, 0,
+                player.sprite.frameWidth, player.sprite.frameHeight,
+                -30, -30,
+                60, 60
+            );
+        } else {
+            // --- SE ESTIVER PARADO ---
+            // 1. Força o primeiro recorte da spritesheet (frame 0)
+            let sourceX = 0; 
+            
+            // 2. Define se vai desenhar 5 pixels acima baseado no timer de 0.3s
+            let offsetY = player.sprite.idleState === 1 ? -5 : 0;
 
-                ctx.restore();
-            }
+            ctx.drawImage(
+                diverSheetImg,
+                sourceX, 0,
+                player.sprite.frameWidth, player.sprite.frameHeight,
+                -30, -30 + offsetY, // Aplica o deslocamento vertical aqui
+                60, 60
+            );
+        }
+
+    } else {
+        // Desenho de backup caso a imagem principal falte
+        ctx.fillStyle = "#ffd700"; ctx.beginPath();
+        ctx.arc(0, 0, 18, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#001521"; ctx.beginPath();
+        ctx.arc(6, -2, 6, 0, Math.PI * 2); ctx.fill();
+    }
+
+    ctx.restore();
+}
 
             if (harpoon.active) {
                 ctx.strokeStyle = "rgba(255,255,255,0.6)";
@@ -1338,6 +1354,20 @@
                     triggerGameOver("Você sofreu ferimentos fatais das criaturas!");
                 }
             }
+
+            
+        if (!player.sprite.isMoving) {
+        // Se você NÃO usa deltaTime, use o sistema de frames (+= 1) abaixo:
+        player.sprite.idleTimer += 1; 
+
+        if (player.sprite.idleTimer >= 32) { // 18 frames = ~0.3 segundos em 60fps
+            player.sprite.idleTimer = 0;
+            player.sprite.idleState = player.sprite.idleState === 0 ? 1 : 0;
+        }
+    } else {
+        player.sprite.idleTimer = 0;
+        player.sprite.idleState = 0;
+    }
         }
 
         gameLoop(0);
