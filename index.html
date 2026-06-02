@@ -182,16 +182,11 @@
 
         .shop-scroll-container {
             max-height: 60vh;
-            /* Limita a altura a 60% da altura da tela do jogador */
             overflow-y: auto;
-            /* Adiciona o scroll vertical se o conteúdo passar do limite */
             padding-right: 10px;
-            /* Espaço para a barra não cobrir o conteúdo */
             margin-bottom: 20px;
-            /* Distância do botão "Voltar ao Mar" */
         }
 
-        /* OPCIONAL: Customizar a barra de rolagem para ficar com visual de jogo */
         .shop-scroll-container::-webkit-scrollbar {
             width: 8px;
         }
@@ -203,7 +198,6 @@
 
         .shop-scroll-container::-webkit-scrollbar-thumb {
             background: #00ffaa;
-            /* Cor combinando com o seu botão */
             border-radius: 4px;
         }
 
@@ -324,11 +318,13 @@
     <canvas id="game"></canvas>
 
     <script>
-        // IMAGEM MODIFICADA: diver.png agora deve conter a folha Horizontal Strip do LibreSprite
-        const diverImg = new Image(); diverImg.src = "img/diver.png";               // O mergulhador parado
-            const diverSheetImg = new Image(); diverSheetImg.src = "img/diver-sheet.png"; // O mergulhador nadando
-            // ... (mantenha o resto, sharkImg, etc)
-        const sharkImg = new Image(); sharkImg.src = "img/tubarao.png";
+        // Imagens do Jogador
+        const diverSheetImg = new Image(); diverSheetImg.src = "img/diver-sheet.png";
+
+        // NOVO: Imagens do Tubarão e folha de sprite
+        const sharkImg = new Image(); sharkImg.src = "img/tubarao.png"; // Pode manter por segurança
+        const sharkSheetImg = new Image(); sharkSheetImg.src = "img/tubarao-sheet.png";
+
         const skyImg = new Image(); skyImg.src = "img/background.jpg";
         const boatImg = new Image(); boatImg.src = "img/barco.png";
         const jellyImg = new Image(); jellyImg.src = "img/jellyfish.png";
@@ -390,7 +386,7 @@
         function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
 
         const player = {
-            x: 0, y: -220,
+            x: 0, y: -40, // Posição atualizada para começar na altura do barco
             speed: 3.5,
             oxygenMax: 50, oxygen: 50,
             hp: 3, maxHp: 3,
@@ -399,10 +395,10 @@
             invulnerable: false, blink: false,
             canMove: false, jumping: true, vy: 0,
 
-            // CONFIGURAÇÕES DA ANIMAÇÃO DO JOGADOR (LIBRESPRITE HORIZONTAL STRIP)
+            // ANIMAÇÃO DO JOGADOR
             sprite: {
-                frameWidth: 32,       // AJUSTE AQUI: Coloque a largura de APENAS UM boneco
-                frameHeight: 32,      // AJUSTE AQUI: Coloque a altura de APENAS UM boneco
+                frameWidth: 32,
+                frameHeight: 32,
                 currentFrame: 0,
                 totalFrames: 4,
                 tickCount: 0,
@@ -413,13 +409,8 @@
             },
 
             levels: {
-                boost: 0,
-                oxygen: 0,
-                inventory: 0,
-                life: 0,
-                harpoon: 0,
-                piercingHarpoon: 0,
-                boat: 1
+                boost: 0, oxygen: 0, inventory: 0,
+                life: 0, harpoon: 0, piercingHarpoon: 0, boat: 1
             },
 
             hasBoost: false, boosting: false, boostPower: 2,
@@ -462,7 +453,8 @@
             for (let i = 0; i < 120; i++) {
                 let randomImgIndex = Math.floor(Math.random() * fishImages.length);
                 fishes.push({
-                    x: rand(-WORLD_LIMIT_X, WORLD_LIMIT_X), y: rand(200, WORLD_LIMIT_Y), r: 14,
+                    x: rand(-WORLD_LIMIT_X, WORLD_LIMIT_X), y: rand(200, WORLD_LIMIT_Y),
+                    r: 26, // AJUSTE AQUI: Peixes maiores (era 14, agora 26)
                     img: fishImages[randomImgIndex],
                     dir: Math.random() < 0.5 ? -1 : 1, speed: rand(0.8, 2.2),
                     timer: 0, moveTime: rand(80, 220)
@@ -496,7 +488,17 @@
                     speed: 5 + depth / 2500, currentSpeed: 4 + depth / 2500,
                     dir: Math.random() < 0.5 ? -1 : 1, facingRight: false,
                     swimSpeed: rand(1, 2), timer: 0, moveTime: rand(80, 240),
-                    activeDistance: 350, tiredTimer: 0
+                    activeDistance: 350, tiredTimer: 0,
+
+                    // NOVO: Controle de Animação Individual do Tubarão
+                    sprite: {
+                        frameWidth: 1171,   // Ajuste se o frame no tubarao-sheet.png for diferente de 90
+                        frameHeight: 693,  // Ajuste se a altura for diferente de 40
+                        currentFrame: 0,
+                        totalFrames: 2,   // Pela imagem, o tubarão tem 2 frames
+                        tickCount: 0,
+                        ticksPerFrame: 15 // Deixa a batida de cauda um pouco mais suave
+                    }
                 });
             }
 
@@ -519,6 +521,11 @@
             menu.style.display = "none";
             quickShopBtn.style.display = "block";
             gameStarted = true;
+
+            // FÍSICA DO PULO INICIAL DO BARCO
+            player.x = 0;           // Nasce no centro
+            player.y = -40;         // Altura do barco
+            player.vy = -7;         // Força do pulo para cima
             player.jumping = true;
             player.canMove = false;
         }
@@ -573,8 +580,10 @@
             if (!gameStarted) return;
 
             if (player.jumping) {
-                player.vy += 0.25;
+                player.vy += 0.25; // Gravidade puxando pra baixo
                 player.y += player.vy;
+
+                // Se o y passou de 80, ele afundou na água
                 if (player.y >= 80) {
                     player.jumping = false;
                     player.canMove = true;
@@ -596,8 +605,6 @@
             let oldX = player.x;
             let oldY = player.y;
 
-            
-            // Monitora se alguma tecla de direção está pressionada
             player.sprite.isMoving = keys["w"] || keys["s"] || keys["a"] || keys["d"];
 
             if (keys["w"]) player.y -= moveSpeed;
@@ -632,7 +639,6 @@
                     player.sprite.currentFrame = (player.sprite.currentFrame + 1) % player.sprite.totalFrames;
                 }
             } else {
-                // Se estiver parado, mantém fixo no primeiro quadro da folha
                 player.sprite.currentFrame = 0;
                 player.sprite.tickCount = 0;
             }
@@ -730,6 +736,13 @@
                 if (shark.timer > shark.moveTime) {
                     shark.timer = 0; shark.dir *= -1;
                     shark.moveTime = rand(80, 240);
+                }
+
+                // NOVO: Atualiza a animação dos frames do tubarão
+                shark.sprite.tickCount++;
+                if (shark.sprite.tickCount > shark.sprite.ticksPerFrame) {
+                    shark.sprite.tickCount = 0;
+                    shark.sprite.currentFrame = (shark.sprite.currentFrame + 1) % shark.sprite.totalFrames;
                 }
 
                 if (isNearScreen(shark.x, shark.y, 400)) {
@@ -1033,6 +1046,7 @@
                 }
             }
 
+            // NOVO: Renderização do Tubarão animado
             for (let shark of sharks) {
                 if (isNearScreen(shark.x, shark.y, 200)) {
                     if (shark.blink) continue;
@@ -1040,64 +1054,67 @@
                     ctx.save();
                     if (shark.facingRight) {
                         ctx.translate(shark.x + shark.w, shark.y); ctx.scale(-1, 1);
-                        ctx.drawImage(sharkImg, 0, 0, shark.w, shark.h);
+                        if (sharkSheetImg.complete && sharkSheetImg.naturalWidth > 0) {
+                            let sourceX = shark.sprite.currentFrame * shark.sprite.frameWidth;
+                            ctx.drawImage(sharkSheetImg, sourceX, 0, shark.sprite.frameWidth, shark.sprite.frameHeight, 0, 0, shark.w, shark.h);
+                        } else {
+                            ctx.drawImage(sharkImg, 0, 0, shark.w, shark.h); // Backup se der erro na spritesheet
+                        }
                     } else {
-                        ctx.drawImage(sharkImg, shark.x, shark.y, shark.w, shark.h);
+                        if (sharkSheetImg.complete && sharkSheetImg.naturalWidth > 0) {
+                            let sourceX = shark.sprite.currentFrame * shark.sprite.frameWidth;
+                            ctx.drawImage(sharkSheetImg, sourceX, 0, shark.sprite.frameWidth, shark.sprite.frameHeight, shark.x, shark.y, shark.w, shark.h);
+                        } else {
+                            ctx.drawImage(sharkImg, shark.x, shark.y, shark.w, shark.h);
+                        }
                     }
                     ctx.restore();
                 }
             }
 
-            // RENDERIZAÇÃO DA ANIMAÇÃO DO MERGULHADOR (CORTANDO A SPRITESHEET)
+            // RENDERIZAÇÃO DO MERGULHADOR
             if (!player.blink) {
-    ctx.save();
-    ctx.translate(player.x, player.y);
+                ctx.save();
+                ctx.translate(player.x, player.y);
 
-    if (player.facingLeft) {
-        ctx.scale(-1, 1);
-    }
+                if (player.facingLeft) {
+                    ctx.scale(-1, 1);
+                }
 
-    // Verifica se a spritesheet está carregada de forma global para ambos os estados
-    if (diverSheetImg.complete && diverSheetImg.naturalWidth > 0) {
-        
-        if (player.sprite.isMoving) {
-            // --- SE ESTIVER ANDANDO ---
-            let sourceX = player.sprite.currentFrame * player.sprite.frameWidth;
+                if (diverSheetImg.complete && diverSheetImg.naturalWidth > 0) {
 
-            ctx.drawImage(
-                diverSheetImg,
-                sourceX, 0,
-                player.sprite.frameWidth, player.sprite.frameHeight,
-                -30, -30,
-                60, 60
-            );
-        } else {
-            // --- SE ESTIVER PARADO ---
-            // 1. Força o primeiro recorte da spritesheet (frame 0)
-            let sourceX = 0; 
-            
-            // 2. Define se vai desenhar 5 pixels acima baseado no timer de 0.3s
-            let offsetY = player.sprite.idleState === 1 ? -5 : 0;
+                    if (player.sprite.isMoving) {
+                        let sourceX = player.sprite.currentFrame * player.sprite.frameWidth;
 
-            ctx.drawImage(
-                diverSheetImg,
-                sourceX, 0,
-                player.sprite.frameWidth, player.sprite.frameHeight,
-                -30, -30 + offsetY, // Aplica o deslocamento vertical aqui
-                60, 60
-            );
-        }
+                        ctx.drawImage(
+                            diverSheetImg,
+                            sourceX, 0,
+                            player.sprite.frameWidth, player.sprite.frameHeight,
+                            -30, -30,
+                            60, 60
+                        );
+                    } else {
+                        let sourceX = 0;
+                        let offsetY = player.sprite.idleState === 1 ? -5 : 0;
 
-    } else {
-        // Desenho de backup caso a imagem principal falte
-        ctx.fillStyle = "#ffd700"; ctx.beginPath();
-        ctx.arc(0, 0, 18, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = "#001521"; ctx.beginPath();
-        ctx.arc(6, -2, 6, 0, Math.PI * 2); ctx.fill();
-    }
+                        ctx.drawImage(
+                            diverSheetImg,
+                            sourceX, 0,
+                            player.sprite.frameWidth, player.sprite.frameHeight,
+                            -30, -30 + offsetY,
+                            60, 60
+                        );
+                    }
 
-    ctx.restore();
-}
+                } else {
+                    ctx.fillStyle = "#ffd700"; ctx.beginPath();
+                    ctx.arc(0, 0, 18, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = "#001521"; ctx.beginPath();
+                    ctx.arc(6, -2, 6, 0, Math.PI * 2); ctx.fill();
+                }
+
+                ctx.restore();
+            }
 
             if (harpoon.active) {
                 ctx.strokeStyle = "rgba(255,255,255,0.6)";
@@ -1204,10 +1221,13 @@
             gameOverScreen.style.display = "none";
             quickShopBtn.style.display = "block";
 
+            // FÍSICA DO PULO INICIAL DO BARCO (Respawn)
             player.x = 0;
-            player.y = -220;
-            player.vy = 0;
+            player.y = -40;
+            player.vy = -7;
             player.jumping = true;
+            player.canMove = false;
+
             player.oxygen = player.oxygenMax;
             player.hp = player.maxHp;
             player.inventory = 0;
@@ -1355,19 +1375,17 @@
                 }
             }
 
-            
-        if (!player.sprite.isMoving) {
-        // Se você NÃO usa deltaTime, use o sistema de frames (+= 1) abaixo:
-        player.sprite.idleTimer += 1; 
+            if (!player.sprite.isMoving) {
+                player.sprite.idleTimer += 1;
 
-        if (player.sprite.idleTimer >= 32) { // 18 frames = ~0.3 segundos em 60fps
-            player.sprite.idleTimer = 0;
-            player.sprite.idleState = player.sprite.idleState === 0 ? 1 : 0;
-        }
-    } else {
-        player.sprite.idleTimer = 0;
-        player.sprite.idleState = 0;
-    }
+                if (player.sprite.idleTimer >= 32) {
+                    player.sprite.idleTimer = 0;
+                    player.sprite.idleState = player.sprite.idleState === 0 ? 1 : 0;
+                }
+            } else {
+                player.sprite.idleTimer = 0;
+                player.sprite.idleState = 0;
+            }
         }
 
         gameLoop(0);
